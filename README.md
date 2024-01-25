@@ -3,7 +3,7 @@
 </p>
 
 # Bibilioteca Api
-# Tener Docker instalado para la db
+# Tener Docker instalado para levantar la db
 1. Clonar Proyecto
 2. ```yarn install```
 3. Clonar el archivo ```.env.template``` y renombrarlo a ```.env``` ('En este caso guardare el .env en el git para que no hagan cambios aqui')
