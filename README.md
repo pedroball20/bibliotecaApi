@@ -12,3 +12,5 @@
 ```
 docker-compose up -d
 ```
+6. Levantar en modo desarrollo:
+```yarn start:dev```
