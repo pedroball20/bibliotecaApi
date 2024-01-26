@@ -14,6 +14,9 @@ export class Book {
     description:string;
     
     @Column('text')
+    urlImg:string;
+    
+    @Column('text')
     gender:string;
     
     @Column('text')

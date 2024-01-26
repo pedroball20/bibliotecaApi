@@ -1,11 +1,27 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
+import { Book } from './entities/book.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class BooksService {
-  create(createBookDto: CreateBookDto) {
-    return 'This action adds a new book';
+  private readonly logger = new Logger('BooksService');
+
+  constructor(
+    @InjectRepository(Book)
+    private readonly bookRepository: Repository<Book>
+
+  ) { }
+  async create(createBookDto: CreateBookDto) {
+    try {
+      const book = this.bookRepository.create(createBookDto);
+      await this.bookRepository.save(book);
+      return book;
+    } catch (error) {
+      this.handleDbExceptions(error);
+    }
   }
 
   findAll() {
@@ -22,5 +38,14 @@ export class BooksService {
 
   remove(id: number) {
     return `This action removes a #${id} book`;
+  }
+
+  private handleDbExceptions(error: any) {
+    if (error.code === '23505') {
+      throw new BadRequestException(error.detail);
+    }
+    this.logger.error(error);
+    console.log(error);
+    throw new InternalServerErrorException('Error!.')
   }
 }
