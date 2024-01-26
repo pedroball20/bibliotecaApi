@@ -25,6 +25,8 @@ export class Book {
     @Column('text')
     bookPopularity:string;
 
-    @Column()
+    @Column('numeric', {
+        nullable: false
+    })
     yearOfPublication:number;
 }
