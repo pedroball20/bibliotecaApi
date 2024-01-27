@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
 import { Book } from './entities/book.entity';
@@ -25,19 +25,48 @@ export class BooksService {
   }
 
   findAll() {
-    return `This action returns all books`;
+    return this.bookRepository.find({});
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} book`;
+  async findOne(id: string) {
+    const book = await this.bookRepository.findOneBy({
+      id
+    });
+    if (!book) throw new NotFoundException(`book with id = ${id} not found`)
+    return book;
+  }
+  async findWithOrder(order: string) {
+    let books;
+
+    switch (order) {
+      case 'author':
+        books = await this.bookRepository.find({ order: { author: 'ASC' } });
+        break;
+      case 'alphabetical':
+        books = await this.bookRepository.find({ order: { title: 'ASC' } });
+        break;
+      case 'gender':
+        books = await this.bookRepository.find({ order: { gender: 'ASC' } });
+        break;
+      case 'yearOfPublication':
+        books = await this.bookRepository.find({ order: { yearOfPublication: 'ASC' } });
+        break;
+      default:
+        books = await this.bookRepository.find();
+        break;
+    }
+
+    return books;
   }
 
-  update(id: number, updateBookDto: UpdateBookDto) {
+  update(id: string, updateBookDto: UpdateBookDto) {
     return `This action updates a #${id} book`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} book`;
+  async remove(id: string) {
+    const book = await this.findOne(id)
+
+    await this.bookRepository.remove(book)
   }
 
   private handleDbExceptions(error: any) {
