@@ -68,6 +68,26 @@ export class BooksService {
 
     await this.bookRepository.remove(book)
   }
+  async getStatistics(type: string, popularity: string) {
+    let result;
+
+    switch (type) {
+      case 'author':
+        result = await this.bookRepository.findBy({
+          authorPopularity: popularity
+        });
+        break;
+      case 'book':
+        result = await this.bookRepository.findBy({
+          bookPopularity: popularity
+        });
+        break;
+      default:
+        throw new Error('Invalid type');
+    }
+
+    return result;
+  }
 
   private handleDbExceptions(error: any) {
     if (error.code === '23505') {
