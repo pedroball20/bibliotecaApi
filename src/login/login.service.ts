@@ -1,26 +1,62 @@
-import { Injectable } from '@nestjs/common';
-import { CreateLoginDto } from './dto/create-login.dto';
-import { UpdateLoginDto } from './dto/update-login.dto';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, UnauthorizedException } from '@nestjs/common';
+import { CreateUserDto, LoginUserDto } from './dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from './entities/user.entity';
+import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class LoginService {
-  create(createLoginDto: CreateLoginDto) {
-    return 'This action adds a new login';
+  private readonly logger = new Logger('LoginService');
+  constructor(
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>
+  ) { }
+
+
+  async create(createUserDto: CreateUserDto) {
+    try {
+      const { password, ...userData } = createUserDto;
+      const user = this.userRepository.create({
+        ...userData,
+        password: bcrypt.hashSync(password, 10)
+      });
+      await this.userRepository.save(user);
+      delete user.password
+      return user;
+
+    } catch (error) {
+      this.handleDbExceptions(error)
+    }
+
   }
 
-  findAll() {
-    return `This action returns all login`;
+  async login(loginUserDto: LoginUserDto) {
+    // try {
+      const { password, email } = loginUserDto;
+
+      const user = await this.userRepository.findOne({
+        where: { email },
+        select: { email: true, password: true }
+      })
+
+      if (!user)
+        throw new UnauthorizedException('Credentials are not Valid (email)')
+      if(!bcrypt.compareSync(password, user.password))
+        throw new UnauthorizedException('Credentials are not Valid (password)')
+      return user;
+
+    // } catch (error) {
+    //   this.handleDbExceptions(error);
+    // }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} login`;
-  }
-
-  update(id: number, updateLoginDto: UpdateLoginDto) {
-    return `This action updates a #${id} login`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} login`;
+  private handleDbExceptions(error: any): never {
+    if (error.code === '23505') {
+      throw new BadRequestException(error.detail);
+    }
+    this.logger.error(error);
+    console.log(error);
+    throw new InternalServerErrorException('Please check server logs.')
   }
 }
