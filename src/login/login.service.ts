@@ -4,13 +4,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import * as bcrypt from "bcrypt";
+import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class LoginService {
   private readonly logger = new Logger('LoginService');
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>
+    private readonly userRepository: Repository<User>,
+
+    private readonly jwtService: JwtService,
   ) { }
 
 
@@ -23,7 +27,10 @@ export class LoginService {
       });
       await this.userRepository.save(user);
       delete user.password
-      return user;
+      return {
+        ...user,
+        token: this.getJwtToken({ email: user.email })
+      };
 
     } catch (error) {
       this.handleDbExceptions(error)
@@ -32,23 +39,29 @@ export class LoginService {
   }
 
   async login(loginUserDto: LoginUserDto) {
-    // try {
-      const { password, email } = loginUserDto;
 
-      const user = await this.userRepository.findOne({
-        where: { email },
-        select: { email: true, password: true }
-      })
+    const { password, email } = loginUserDto;
 
-      if (!user)
-        throw new UnauthorizedException('Credentials are not Valid (email)')
-      if(!bcrypt.compareSync(password, user.password))
-        throw new UnauthorizedException('Credentials are not Valid (password)')
-      return user;
+    const user = await this.userRepository.findOne({
+      where: { email },
+      select: { email: true, password: true }
+    })
 
-    // } catch (error) {
-    //   this.handleDbExceptions(error);
-    // }
+    if (!user)
+      throw new UnauthorizedException('Credentials are not Valid (email)')
+    if (!bcrypt.compareSync(password, user.password))
+      throw new UnauthorizedException('Credentials are not Valid (password)')
+    return {
+      ...user,
+      token: this.getJwtToken({ email: user.email })
+    };
+
+  }
+
+  private getJwtToken(payload: JwtPayload) {
+
+    const token = this.jwtService.sign(payload);
+    return token;
   }
 
   private handleDbExceptions(error: any): never {

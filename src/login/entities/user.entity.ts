@@ -1,4 +1,4 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity('users')
 export class User {
@@ -21,9 +21,23 @@ export class User {
     @Column({ type: 'date' })
     dateOfBirth: Date;
 
+    @Column('bool', {
+        default: true
+    })
+    isActive: boolean;
+    
     @Column('text', {
         array: true,
         default: ['user']
     })
     roles: string[];
+
+    @BeforeInsert()
+    checkFieldsBeforeInsert(){
+        this.email= this.email.toLowerCase().trim();
+    }
+    @BeforeUpdate()
+    checkFieldsBeforeUpdate(){
+        this.checkFieldsBeforeInsert();
+    }
 }
