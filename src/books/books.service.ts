@@ -4,6 +4,8 @@ import { UpdateBookDto } from './dto/update-book.dto';
 import { Book } from './entities/book.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
+import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { OrderDto } from './dto/order.dto';
 
 @Injectable()
 export class BooksService {
@@ -24,8 +26,12 @@ export class BooksService {
     }
   }
 
-  findAll() {
-    return this.bookRepository.find({});
+  findAll(paginationDto: PaginationDto) {
+    const { limit = 10, offset = 0 } = paginationDto;
+    return this.bookRepository.find({
+      take: limit,
+      skip: offset,
+    });
   }
 
   async findOne(id: string) {
@@ -35,9 +41,9 @@ export class BooksService {
     if (!book) throw new NotFoundException(`book with id = ${id} not found`)
     return book;
   }
-  async findWithOrder(order: string) {
+  async findWithOrder(orderDto: OrderDto) {
     let books;
-
+    const { order } = orderDto
     switch (order) {
       case 'author':
         books = await this.bookRepository.find({ order: { author: 'ASC' } });

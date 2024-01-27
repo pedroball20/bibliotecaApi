@@ -2,6 +2,8 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query
 import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookDto } from './dto/update-book.dto';
+import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { OrderDto } from './dto/order.dto';
 
 @Controller('books')
 export class BooksController {
@@ -13,17 +15,14 @@ export class BooksController {
   }
 
   @Get('read')
-  findWithOrder(@Query('order') order: string) {
-    if (!['author', 'alphabetical', 'gender', 'yearOfPublication'].includes(order)) {
-      throw new BadRequestException('Invalid order parameter');
-    }
-    return this.booksService.findWithOrder(order);
+  findWithOrder(@Query() orderDto: OrderDto) {
+    return this.booksService.findWithOrder(orderDto);
   }
 
   //paginado
   @Get('/read/get')
-  findAll() {
-    return this.booksService.findAll();
+  findAll(@Query() paginationDto: PaginationDto) {
+    return this.booksService.findAll(paginationDto);
   }
 
   @Get(':id')
