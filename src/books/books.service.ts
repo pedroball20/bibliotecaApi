@@ -74,7 +74,7 @@ export class BooksService {
 
     await this.bookRepository.remove(book)
   }
-  async getStatistics(type: string, popularity: string) {
+  async getStatistics(type: string = "author", popularity: string = 'Alta') {
     let result;
 
     switch (type) {
