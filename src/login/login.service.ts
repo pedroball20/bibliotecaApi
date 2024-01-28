@@ -29,7 +29,7 @@ export class LoginService {
       delete user.password
       return {
         ...user,
-        token: this.getJwtToken({ email: user.email })
+        token: this.getJwtToken({ id: user.id })
       };
 
     } catch (error) {
@@ -44,7 +44,7 @@ export class LoginService {
 
     const user = await this.userRepository.findOne({
       where: { email },
-      select: { email: true, password: true }
+      select: { email: true, password: true, id: true }
     })
 
     if (!user)
@@ -53,7 +53,7 @@ export class LoginService {
       throw new UnauthorizedException('Credentials are not Valid (password)')
     return {
       ...user,
-      token: this.getJwtToken({ email: user.email })
+      token: this.getJwtToken({ id: user.id })
     };
 
   }
